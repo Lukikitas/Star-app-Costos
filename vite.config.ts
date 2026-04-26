@@ -1,9 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const repoBase = "/Star-app-Costos/";
+
 export default defineConfig({
   plugins: [react()],
-  // Para GitHub Pages en repositorio: base: "/NOMBRE_REPO/"
-  // Para dominio personalizado (ej. costos.star-app.com.ar): base: "/"
-  base: "/",
+  // GitHub Pages en repositorio (https://usuario.github.io/NOMBRE_REPO/): usar `repoBase`.
+  // Dominio personalizado (https://costos.star-app.com.ar/): cambiar `base` a "/".
+  base: process.env.USE_CUSTOM_DOMAIN === "true" ? "/" : repoBase,
 });

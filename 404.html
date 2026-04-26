@@ -3,10 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>STAR Costos</title>
+    <title>Redirigiendo…</title>
+    <script>
+      (function () {
+        sessionStorage.setItem("spa_redirect", window.location.href);
+        var base = window.location.pathname.split("/").slice(0, 2).join("/") + "/";
+        window.location.replace(base);
+      })();
+    </script>
   </head>
-  <body class="bg-slate-50">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <body>
+    <p>Redirigiendo…</p>
   </body>
 </html>

@@ -16,6 +16,7 @@ App web para calcular costos y precios sugeridos de productos gastronómicos usa
 - Timestamps con `serverTimestamp`
 
 ## Deploy GitHub Pages
-- Configurar `base` en `vite.config.ts` según URL final.
-- Incluye `404.html` para recarga de rutas.
+- Base por defecto del proyecto: `/Star-app-Costos/` (Project Pages).
+- Si usás dominio personalizado, desplegá con `USE_CUSTOM_DOMAIN=true npm run build`.
+- Se incluye fallback SPA con `404.html` + restauración de ruta en `index.html`.
 - Incluye workflow `.github/workflows/deploy.yml`.
