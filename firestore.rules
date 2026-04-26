@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBusinessMember(businessId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/businesses/$(businessId))
+        && get(/databases/$(database)/documents/businesses/$(businessId)).data.members[request.auth.uid] != null;
+    }
+
+    function getBusinessRole(businessId) {
+      return get(/databases/$(database)/documents/businesses/$(businessId)).data.members[request.auth.uid];
+    }
+
+    function isBusinessOwner(businessId) {
+      return isBusinessMember(businessId)
+        && getBusinessRole(businessId) == "owner";
+    }
+
+    function canEditBusinessData(businessId) {
+      return isBusinessMember(businessId)
+        && (getBusinessRole(businessId) == "owner" || getBusinessRole(businessId) == "editor");
+    }
+
+    match /users/{userId} {
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow read, update, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /businesses/{businessId} {
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.members[request.auth.uid] == "owner";
+
+      allow read: if isBusinessMember(businessId);
+      allow update: if isBusinessOwner(businessId);
+      allow delete: if isBusinessOwner(businessId);
+
+      match /supplies/{supplyId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update, delete: if canEditBusinessData(businessId);
+      }
+
+      match /recipes/{recipeId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update, delete: if canEditBusinessData(businessId);
+      }
+    }
+  }
+}
