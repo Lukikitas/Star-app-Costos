@@ -7,14 +7,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function businessDoc(businessId) {
+      return get(/databases/$(database)/documents/businesses/$(businessId));
+    }
+
     function isBusinessMember(businessId) {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/businesses/$(businessId))
-        && get(/databases/$(database)/documents/businesses/$(businessId)).data.members[request.auth.uid] != null;
+        && businessDoc(businessId).data.members[request.auth.uid] != null;
     }
 
     function getBusinessRole(businessId) {
-      return get(/databases/$(database)/documents/businesses/$(businessId)).data.members[request.auth.uid];
+      return businessDoc(businessId).data.members[request.auth.uid];
     }
 
     function isBusinessOwner(businessId) {
@@ -37,7 +40,10 @@ service cloud.firestore {
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.members[request.auth.uid] == "owner";
 
-      allow read: if isBusinessMember(businessId);
+      // Importante: para poder evaluar `get()` desde subcolecciones sin loop,
+      // el read del business se valida sólo con `resource`.
+      allow read: if isSignedIn()
+        && resource.data.members[request.auth.uid] != null;
       allow update: if isBusinessOwner(businessId);
       allow delete: if isBusinessOwner(businessId);
 

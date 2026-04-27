@@ -104,9 +104,16 @@ export const duplicateRecipe = async (businessId: string, recipe: Recipe) => {
 
 export const listenRecipes = (businessId: string, callback: (recipes: Recipe[]) => void) => {
   const q = query(collection(db, "businesses", businessId, "recipes"), orderBy("name", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Recipe, "id">) })));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Recipe, "id">) })));
+    },
+    (error) => {
+      console.error("[listenRecipes] Firestore snapshot error", error);
+      callback([]);
+    },
+  );
 };
 
 export const getRecipesOnce = async (businessId: string): Promise<Recipe[]> => {

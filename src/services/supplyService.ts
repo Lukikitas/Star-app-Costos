@@ -54,9 +54,16 @@ export const deleteSupply = async (businessId: string, supplyId: string) => {
 
 export const listenSupplies = (businessId: string, callback: (supplies: Supply[]) => void) => {
   const q = query(collection(db, "businesses", businessId, "supplies"), orderBy("name", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Supply, "id">) })));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Supply, "id">) })));
+    },
+    (error) => {
+      console.error("[listenSupplies] Firestore snapshot error", error);
+      callback([]);
+    },
+  );
 };
 
 export const getSuppliesOnce = async (businessId: string): Promise<Supply[]> => {

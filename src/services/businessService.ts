@@ -42,9 +42,16 @@ export const getUserBusinesses = async (userId: string): Promise<Business[]> => 
 
 export const listenUserBusinesses = (userId: string, callback: (businesses: Business[]) => void) => {
   const q = query(collection(db, "businesses"), where(`members.${userId}`, "in", ["owner", "editor", "viewer"]));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((item) => ({ id: item.id, ...(item.data() as Omit<Business, "id">) })));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((item) => ({ id: item.id, ...(item.data() as Omit<Business, "id">) })));
+    },
+    (error) => {
+      console.error("[listenUserBusinesses] Firestore snapshot error", error);
+      callback([]);
+    },
+  );
 };
 
 export const updateBusiness = async (businessId: string, data: Partial<Pick<Business, "name" | "members">>) => {
