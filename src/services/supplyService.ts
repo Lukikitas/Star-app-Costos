@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -8,11 +7,13 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { CreateSupplyInput, Supply } from "../types";
 import { calculateUnitCost, getBaseUnit, normalizeQuantity } from "../utils/costCalculations";
+import { deleteImageByPath, uploadCoverImage } from "./imageService";
 
 const validate = (input: CreateSupplyInput) => {
   if (!input.name.trim()) throw new Error("El nombre del insumo es obligatorio.");
@@ -33,11 +34,13 @@ const buildData = (input: CreateSupplyInput) => ({
 
 export const createSupply = async (businessId: string, input: CreateSupplyInput) => {
   validate(input);
-  await addDoc(collection(db, "businesses", businessId, "supplies"), {
+  const ref = doc(collection(db, "businesses", businessId, "supplies"));
+  await setDoc(ref, {
     ...buildData(input),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  return ref.id;
 };
 
 export const updateSupply = async (businessId: string, supplyId: string, input: CreateSupplyInput) => {
@@ -50,6 +53,30 @@ export const updateSupply = async (businessId: string, supplyId: string, input: 
 
 export const deleteSupply = async (businessId: string, supplyId: string) => {
   await deleteDoc(doc(db, "businesses", businessId, "supplies", supplyId));
+};
+
+export const setSupplyCoverImage = async (businessId: string, supplyId: string, file: File) => {
+  const { imageUrl, imagePath } = await uploadCoverImage(businessId, "supplies", supplyId, file);
+  await updateDoc(doc(db, "businesses", businessId, "supplies", supplyId), {
+    imageUrl,
+    imagePath,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const removeSupplyCoverImage = async (businessId: string, supplyId: string, imagePath?: string | null) => {
+  if (imagePath) {
+    try {
+      await deleteImageByPath(imagePath);
+    } catch (e) {
+      console.warn("[removeSupplyCoverImage] delete failed", e);
+    }
+  }
+  await updateDoc(doc(db, "businesses", businessId, "supplies", supplyId), {
+    imageUrl: null,
+    imagePath: null,
+    updatedAt: serverTimestamp(),
+  });
 };
 
 export const listenSupplies = (businessId: string, callback: (supplies: Supply[]) => void) => {

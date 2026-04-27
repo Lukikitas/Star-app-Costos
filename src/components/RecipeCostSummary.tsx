@@ -25,12 +25,22 @@ export const RecipeCostSummary = ({ input, supplies }: { input: CreateRecipeInpu
   const margin = calculateRealMargin(suggested, finalCost);
 
   return (
-    <div className="bg-slate-50 border rounded p-3 text-sm space-y-1">
-      <p>Costo producción: <strong>${production.toFixed(2)}</strong></p>
-      <p>Costo final: <strong>${finalCost.toFixed(2)}</strong></p>
-      <p>Precio sugerido: <strong>${suggested.toFixed(2)}</strong></p>
-      <p>Ganancia estimada: <strong>${profit.toFixed(2)}</strong></p>
-      <p>Margen real: <strong>{margin.toFixed(2)}%</strong></p>
+    <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm space-y-1">
+      <p className="text-slate-600 dark:text-slate-300">
+        Costo de producción (ingredientes): <strong className="text-slate-900 dark:text-slate-100">${production.toFixed(2)}</strong>
+      </p>
+      <p className="text-slate-600 dark:text-slate-300">
+        Costo final (con merma + extras): <strong className="text-slate-900 dark:text-slate-100">${finalCost.toFixed(2)}</strong>
+      </p>
+      <p className="text-slate-600 dark:text-slate-300">
+        Precio sugerido (según margen y redondeo): <strong className="text-slate-900 dark:text-slate-100">${suggested.toFixed(2)}</strong>
+      </p>
+      <p className="text-slate-600 dark:text-slate-300">
+        Ganancia estimada: <strong className="text-slate-900 dark:text-slate-100">${profit.toFixed(2)}</strong>
+      </p>
+      <p className="text-slate-600 dark:text-slate-300">
+        Margen real: <strong className="text-slate-900 dark:text-slate-100">{margin.toFixed(2)}%</strong>
+      </p>
     </div>
   );
 };

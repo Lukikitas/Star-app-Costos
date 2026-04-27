@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { StatCard } from "../components/StatCard";
+import { Button } from "../components/ui/Button";
+import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import { useAuthContext } from "../context/AuthContext";
 import { listenRecipes } from "../services/recipeService";
 import { listenSupplies } from "../services/supplyService";
@@ -31,6 +33,17 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader
+          title="Resumen"
+          description="Tu flujo recomendado: cargá insumos → creá recetas → compará márgenes y precios sugeridos."
+        />
+        <CardBody className="flex flex-wrap gap-2">
+          <Link to="/supplies"><Button variant="primary">Cargar insumos</Button></Link>
+          <Link to="/recipes"><Button variant="secondary">Crear receta</Button></Link>
+          <Link to="/compare"><Button variant="ghost">Comparar</Button></Link>
+        </CardBody>
+      </Card>
       <div className="grid md:grid-cols-4 gap-3">
         <StatCard label="Insumos" value={supplies.length} />
         <StatCard label="Recetas" value={recipes.length} />
@@ -41,10 +54,6 @@ export const DashboardPage = () => {
         <StatCard label="Receta más cara" value={stats.maxCost?.name ?? "-"} />
         <StatCard label="Mayor margen" value={stats.maxMargin?.name ?? "-"} />
         <StatCard label="Menor margen" value={stats.minMargin?.name ?? "-"} />
-      </div>
-      <div className="flex gap-2">
-        <Link to="/supplies" className="px-4 py-2 rounded bg-blue-600 text-white">Crear insumo</Link>
-        <Link to="/recipes" className="px-4 py-2 rounded bg-slate-900 text-white">Crear receta</Link>
       </div>
     </div>
   );

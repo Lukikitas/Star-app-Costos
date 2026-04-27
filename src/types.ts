@@ -25,6 +25,8 @@ export interface Supply {
   id: string;
   name: string;
   category: string;
+  imageUrl?: string | null;
+  imagePath?: string | null;
   packageCost: number;
   packageQuantity: number;
   packageUnit: Unit;
@@ -50,6 +52,8 @@ export interface Recipe {
   id: string;
   name: string;
   category: string;
+  imageUrl?: string | null;
+  imagePath?: string | null;
   ingredients: RecipeIngredient[];
   wastePercentage: number;
   desiredMargin: number;

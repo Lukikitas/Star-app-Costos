@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { Button } from "../components/ui/Button";
+import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
 import { useAuthContext } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { logoutUser } from "../services/authService";
+import { addCategory, removeCategory, renameCategory } from "../services/categoryService";
 import { createRecipe } from "../services/recipeService";
 import { importBusinessData, resetBusinessData } from "../services/importExportService";
 import { createSupply, getSuppliesOnce } from "../services/supplyService";
@@ -16,10 +22,14 @@ const demoSupplies = [
 ];
 
 export const SettingsPage = () => {
-  const { business, user } = useAuthContext();
+  const { business, user, categories } = useAuthContext();
+  const { theme, setTheme } = useTheme();
   const [showReset, setShowReset] = useState(false);
   const [message, setMessage] = useState<string>();
   const [canLoadDemo, setCanLoadDemo] = useState(false);
+  const [newSupplyCategory, setNewSupplyCategory] = useState("");
+  const [newRecipeCategory, setNewRecipeCategory] = useState("");
+  const [catError, setCatError] = useState<string>();
 
   useEffect(() => {
     if (!business) return;
@@ -77,18 +87,171 @@ export const SettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border rounded-xl p-4 space-y-2">
-        <h3 className="font-semibold">Negocio</h3>
-        <p>{business.name}</p>
-        <p className="text-sm text-slate-500">Usuario: {user?.email}</p>
+      <Card>
+        <CardHeader title="Negocio" />
+        <CardBody className="space-y-2">
+          <p className="font-medium text-slate-900 dark:text-slate-100">{business.name}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Usuario: {user?.email}</p>
+        </CardBody>
+      </Card>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">
+        <h3 className="font-semibold">Apariencia</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-slate-600 dark:text-slate-300">Tema</p>
+          <Select value={theme} onChange={(e) => setTheme(e.target.value as typeof theme)} className="max-w-[220px]">
+            <option value="system">Sistema</option>
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </Select>
+        </div>
       </div>
-      {message && <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{message}</p>}
+
+      {message && <p className="text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/30 p-2 rounded">{message}</p>}
+
+      <Card>
+        <CardHeader title="Categorías" description="Administrá categorías por negocio. Se usan en filtros y formularios." />
+        <CardBody className="space-y-6">
+          {catError && <p className="text-sm text-red-600 dark:text-red-300">{catError}</p>}
+
+          <div className="space-y-2">
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Categorías de insumos</h4>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                className="max-w-sm"
+                placeholder="Nueva categoría (insumos)"
+                value={newSupplyCategory}
+                onChange={(e) => setNewSupplyCategory(e.target.value)}
+              />
+              <Button
+                variant="primary"
+                onClick={async () => {
+                  if (!business) return;
+                  setCatError(undefined);
+                  try {
+                    await addCategory(business.id, "supplies", newSupplyCategory);
+                    setNewSupplyCategory("");
+                  } catch (e) {
+                    setCatError(e instanceof Error ? e.message : "No se pudo agregar la categoría.");
+                  }
+                }}
+              >
+                Agregar
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {categories.supplies.map((cat) => (
+                <div key={cat} className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2">
+                  <input
+                    className="flex-1 bg-transparent text-sm text-slate-900 dark:text-slate-100 outline-none"
+                    defaultValue={cat}
+                    onBlur={async (e) => {
+                      const next = e.target.value;
+                      if (!business || next.trim() === cat.trim()) return;
+                      setCatError(undefined);
+                      try {
+                        await renameCategory(business.id, "supplies", cat, next);
+                      } catch (err) {
+                        setCatError(err instanceof Error ? err.message : "No se pudo renombrar la categoría.");
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    onClick={async () => {
+                      if (!business) return;
+                      setCatError(undefined);
+                      try {
+                        await removeCategory(business.id, "supplies", cat);
+                      } catch (err) {
+                        setCatError(err instanceof Error ? err.message : "No se pudo eliminar la categoría.");
+                      }
+                    }}
+                  >
+                    Quitar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Categorías de recetas</h4>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                className="max-w-sm"
+                placeholder="Nueva categoría (recetas)"
+                value={newRecipeCategory}
+                onChange={(e) => setNewRecipeCategory(e.target.value)}
+              />
+              <Button
+                variant="primary"
+                onClick={async () => {
+                  if (!business) return;
+                  setCatError(undefined);
+                  try {
+                    await addCategory(business.id, "recipes", newRecipeCategory);
+                    setNewRecipeCategory("");
+                  } catch (e) {
+                    setCatError(e instanceof Error ? e.message : "No se pudo agregar la categoría.");
+                  }
+                }}
+              >
+                Agregar
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {categories.recipes.map((cat) => (
+                <div key={cat} className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2">
+                  <input
+                    className="flex-1 bg-transparent text-sm text-slate-900 dark:text-slate-100 outline-none"
+                    defaultValue={cat}
+                    onBlur={async (e) => {
+                      const next = e.target.value;
+                      if (!business || next.trim() === cat.trim()) return;
+                      setCatError(undefined);
+                      try {
+                        await renameCategory(business.id, "recipes", cat, next);
+                      } catch (err) {
+                        setCatError(err instanceof Error ? err.message : "No se pudo renombrar la categoría.");
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    onClick={async () => {
+                      if (!business) return;
+                      setCatError(undefined);
+                      try {
+                        await removeCategory(business.id, "recipes", cat);
+                      } catch (err) {
+                        setCatError(err instanceof Error ? err.message : "No se pudo eliminar la categoría.");
+                      }
+                    }}
+                  >
+                    Quitar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
       <div className="flex flex-wrap gap-2">
-        <button className="px-3 py-2 bg-slate-900 text-white rounded" onClick={exportData}>Exportar JSON</button>
-        <label className="px-3 py-2 bg-slate-100 rounded cursor-pointer">Importar JSON<input className="hidden" type="file" accept="application/json" onChange={(e) => e.target.files?.[0] && importData(e.target.files[0])} /></label>
-        {canLoadDemo && <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={loadDemo}>Cargar demo</button>}
-        <button className="px-3 py-2 bg-red-600 text-white rounded" onClick={() => setShowReset(true)}>Resetear negocio</button>
-        <button className="px-3 py-2 bg-slate-700 text-white rounded" onClick={() => logoutUser()}>Cerrar sesión</button>
+        <Button variant="secondary" onClick={exportData}>Exportar JSON</Button>
+        <label className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg cursor-pointer">
+          Importar JSON
+          <input className="hidden" type="file" accept="application/json" onChange={(e) => e.target.files?.[0] && importData(e.target.files[0])} />
+        </label>
+        {canLoadDemo && <Button variant="primary" onClick={loadDemo}>Cargar demo</Button>}
+        <Button variant="danger" onClick={() => setShowReset(true)}>Resetear negocio</Button>
+        <Button variant="secondary" onClick={() => logoutUser()}>Cerrar sesión</Button>
       </div>
       <ConfirmDialog
         open={showReset}

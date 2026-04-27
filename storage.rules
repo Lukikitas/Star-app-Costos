@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function businessDoc(businessId) {
+      return firestore.get(/databases/(default)/documents/businesses/$(businessId));
+    }
+
+    function isBusinessMember(businessId) {
+      return isSignedIn()
+        && businessDoc(businessId).data.members[request.auth.uid] != null;
+    }
+
+    function getBusinessRole(businessId) {
+      return businessDoc(businessId).data.members[request.auth.uid];
+    }
+
+    function canEditBusinessData(businessId) {
+      return isBusinessMember(businessId)
+        && (getBusinessRole(businessId) == "owner" || getBusinessRole(businessId) == "editor");
+    }
+
+    match /businesses/{businessId}/{kind}/{ownerId}/{fileName} {
+      allow read: if isBusinessMember(businessId);
+      allow write: if canEditBusinessData(businessId);
+    }
+  }
+}
+

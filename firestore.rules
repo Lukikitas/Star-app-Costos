@@ -56,6 +56,11 @@ service cloud.firestore {
         allow read: if isBusinessMember(businessId);
         allow create, update, delete: if canEditBusinessData(businessId);
       }
+
+      match /settings/{settingId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update, delete: if canEditBusinessData(businessId);
+      }
     }
   }
 }

@@ -8,10 +8,12 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { CreateRecipeInput, Recipe, RecipeIngredient, Supply } from "../types";
+import { deleteImageByPath, uploadCoverImage } from "./imageService";
 import {
   applyWaste,
   calculateEstimatedProfit,
@@ -74,11 +76,13 @@ const buildRecipeData = (input: CreateRecipeInput, supplies: Supply[]) => {
 };
 
 export const createRecipe = async (businessId: string, input: CreateRecipeInput, supplies: Supply[]) => {
-  await addDoc(collection(db, "businesses", businessId, "recipes"), {
+  const ref = doc(collection(db, "businesses", businessId, "recipes"));
+  await setDoc(ref, {
     ...buildRecipeData(input, supplies),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  return ref.id;
 };
 
 export const updateRecipe = async (businessId: string, recipeId: string, input: CreateRecipeInput, supplies: Supply[]) => {
@@ -90,6 +94,30 @@ export const updateRecipe = async (businessId: string, recipeId: string, input: 
 
 export const deleteRecipe = async (businessId: string, recipeId: string) => {
   await deleteDoc(doc(db, "businesses", businessId, "recipes", recipeId));
+};
+
+export const setRecipeCoverImage = async (businessId: string, recipeId: string, file: File) => {
+  const { imageUrl, imagePath } = await uploadCoverImage(businessId, "recipes", recipeId, file);
+  await updateDoc(doc(db, "businesses", businessId, "recipes", recipeId), {
+    imageUrl,
+    imagePath,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const removeRecipeCoverImage = async (businessId: string, recipeId: string, imagePath?: string | null) => {
+  if (imagePath) {
+    try {
+      await deleteImageByPath(imagePath);
+    } catch (e) {
+      console.warn("[removeRecipeCoverImage] delete failed", e);
+    }
+  }
+  await updateDoc(doc(db, "businesses", businessId, "recipes", recipeId), {
+    imageUrl: null,
+    imagePath: null,
+    updatedAt: serverTimestamp(),
+  });
 };
 
 export const duplicateRecipe = async (businessId: string, recipe: Recipe) => {
