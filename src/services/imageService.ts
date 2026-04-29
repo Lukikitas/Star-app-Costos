@@ -8,9 +8,9 @@ export type ImageOwnerKind = "supplies" | "recipes";
  * comprimimos (re-escala + JPEG) antes de guardar.
  */
 export const uploadCoverImage = async (
-  businessId: string,
-  kind: ImageOwnerKind,
-  ownerId: string,
+  _businessId: string,
+  _kind: ImageOwnerKind,
+  _ownerId: string,
   file: File,
 ) => {
   const imageUrl = await fileToCompressedDataUrl(file, { maxSidePx: 900, quality: 0.85 });
