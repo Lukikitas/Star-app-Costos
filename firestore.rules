@@ -59,7 +59,10 @@ service cloud.firestore {
 
       match /settings/{settingId} {
         allow read: if isBusinessMember(businessId);
-        allow create, update, delete: if canEditBusinessData(businessId);
+        // `categories` se usa para filtros/formularios; permitir edición para miembros
+        // (y mantener owner/editor para resto de configuraciones).
+        allow create, update, delete: if canEditBusinessData(businessId)
+          || (settingId == "categories" && isBusinessMember(businessId));
       }
     }
   }

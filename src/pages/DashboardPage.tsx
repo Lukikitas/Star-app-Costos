@@ -22,11 +22,38 @@ export const DashboardPage = () => {
   }, [business]);
 
   const stats = useMemo(() => {
-    const avgCost = recipes.length ? recipes.reduce((a, r) => a + r.productionCost, 0) / recipes.length : 0;
-    const maxCost = [...recipes].sort((a, b) => b.productionCost - a.productionCost)[0];
-    const maxMargin = [...recipes].sort((a, b) => b.realMargin - a.realMargin)[0];
-    const minMargin = [...recipes].sort((a, b) => a.realMargin - b.realMargin)[0];
-    return { avgCost, maxCost, maxMargin, minMargin };
+    const count = recipes.length;
+    const avgProductionCost = count ? recipes.reduce((a, r) => a + r.productionCost, 0) / count : 0;
+    const avgPublicCost = count ? recipes.reduce((a, r) => a + r.suggestedPrice, 0) / count : 0;
+    const avgEstimatedProfit = count ? recipes.reduce((a, r) => a + r.estimatedProfit, 0) / count : 0;
+    const avgRealMargin = count ? recipes.reduce((a, r) => a + r.realMargin, 0) / count : 0;
+
+    const bestByProfit = count ? [...recipes].sort((a, b) => b.estimatedProfit - a.estimatedProfit)[0] : undefined;
+    const worstByProfit = count ? [...recipes].sort((a, b) => a.estimatedProfit - b.estimatedProfit)[0] : undefined;
+    const bestByMargin = count ? [...recipes].sort((a, b) => b.realMargin - a.realMargin)[0] : undefined;
+    const worstByMargin = count ? [...recipes].sort((a, b) => a.realMargin - b.realMargin)[0] : undefined;
+
+    const profitableCount = recipes.filter((r) => r.estimatedProfit > 0).length;
+
+    const categoryCounts = new Map<string, number>();
+    for (const r of recipes) categoryCounts.set(r.category, (categoryCounts.get(r.category) ?? 0) + 1);
+    const top = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topCategory = top?.[0];
+    const topCategoryCount = top?.[1] ?? 0;
+
+    return {
+      avgProductionCost,
+      avgPublicCost,
+      avgEstimatedProfit,
+      avgRealMargin,
+      bestByProfit,
+      worstByProfit,
+      bestByMargin,
+      worstByMargin,
+      profitableCount,
+      topCategory,
+      topCategoryCount,
+    };
   }, [recipes]);
 
   if (!business) return <EmptyState title="Sin negocio" description="Registrate para crear tu negocio." />;
@@ -47,13 +74,22 @@ export const DashboardPage = () => {
       <div className="grid md:grid-cols-4 gap-3">
         <StatCard label="Insumos" value={supplies.length} />
         <StatCard label="Recetas" value={recipes.length} />
-        <StatCard label="Costo promedio" value={`$${stats.avgCost.toFixed(2)}`} />
-        <StatCard label="Productos cargados" value={recipes.length} />
+        <StatCard label="Costo prod. prom." value={`$${stats.avgProductionCost.toFixed(2)}`} />
+        <StatCard label="Costo público prom." value={`$${stats.avgPublicCost.toFixed(2)}`} />
       </div>
-      <div className="grid md:grid-cols-3 gap-3">
-        <StatCard label="Receta más cara" value={stats.maxCost?.name ?? "-"} />
-        <StatCard label="Mayor margen" value={stats.maxMargin?.name ?? "-"} />
-        <StatCard label="Menor margen" value={stats.minMargin?.name ?? "-"} />
+
+      <div className="grid md:grid-cols-4 gap-3">
+        <StatCard label="Ganancia neta prom." value={`$${stats.avgEstimatedProfit.toFixed(2)}`} />
+        <StatCard label="% ganancia prom." value={`${stats.avgRealMargin.toFixed(2)}%`} />
+        <StatCard label="Recetas con ganancia" value={stats.profitableCount} />
+        <StatCard label="Categoría más usada" value={stats.topCategory ? `${stats.topCategory} (${stats.topCategoryCount})` : "-"} />
+      </div>
+
+      <div className="grid md:grid-cols-4 gap-3">
+        <StatCard label="Mejor ganancia neta" value={stats.bestByProfit?.name ?? "-"} />
+        <StatCard label="Peor ganancia neta" value={stats.worstByProfit?.name ?? "-"} />
+        <StatCard label="Mayor % ganancia" value={stats.bestByMargin?.name ?? "-"} />
+        <StatCard label="Menor % ganancia" value={stats.worstByMargin?.name ?? "-"} />
       </div>
     </div>
   );
