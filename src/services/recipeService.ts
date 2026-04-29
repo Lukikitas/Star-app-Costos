@@ -75,6 +75,32 @@ const buildRecipeData = (input: CreateRecipeInput, supplies: Supply[]) => {
   };
 };
 
+export const recalculateRecipePricing = (recipe: Recipe, supplies: Supply[]) => {
+  // Recalcula los costos y precios sugeridos manteniendo el margen deseado y la lógica existente.
+  // No toca campos de imagen (imageUrl / imagePath).
+  const input: CreateRecipeInput = {
+    name: recipe.name,
+    category: recipe.category,
+    ingredients: recipe.ingredients.map((i) => ({ supplyId: i.supplyId, quantity: i.quantity, unit: i.unit })),
+    wastePercentage: recipe.wastePercentage,
+    desiredMargin: recipe.desiredMargin,
+    extraCosts: recipe.extraCosts,
+    roundingMode: recipe.roundingMode,
+  };
+
+  const next = buildRecipeData(input, supplies);
+
+  return {
+    ingredients: next.ingredients,
+    productionCost: next.productionCost,
+    finalCost: next.finalCost,
+    suggestedPrice: next.suggestedPrice,
+    estimatedProfit: next.estimatedProfit,
+    realMargin: next.realMargin,
+    markup: next.markup,
+  };
+};
+
 export const createRecipe = async (businessId: string, input: CreateRecipeInput, supplies: Supply[]) => {
   const ref = doc(collection(db, "businesses", businessId, "recipes"));
   await setDoc(ref, {
@@ -148,4 +174,17 @@ export const getRecipesOnce = async (businessId: string): Promise<Recipe[]> => {
   const q = query(collection(db, "businesses", businessId, "recipes"), orderBy("name", "asc"));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Recipe, "id">) }));
+};
+
+export const applyRecipePricingRecalculation = async (
+  businessId: string,
+  recipeId: string,
+  recipe: Recipe,
+  supplies: Supply[],
+) => {
+  const recalculated = recalculateRecipePricing(recipe, supplies);
+  await updateDoc(doc(db, "businesses", businessId, "recipes", recipeId), {
+    ...recalculated,
+    updatedAt: serverTimestamp(),
+  });
 };
