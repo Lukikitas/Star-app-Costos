@@ -121,7 +121,7 @@ export const RecipesPage = () => {
               <div key={cat} className="space-y-2">
                 <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{cat}</h3>
                 <div className="overflow-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[900px] text-sm">
                     <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300">
                       <tr>
                         <th className="p-3 text-left">Receta</th>
@@ -151,7 +151,7 @@ export const RecipesPage = () => {
                           <td className="p-3 text-right">${r.suggestedPrice.toFixed(2)}</td>
                           <td className="p-3 text-right">{r.realMargin.toFixed(2)}%</td>
                           <td className="p-3 text-right">${r.estimatedProfit.toFixed(2)}</td>
-                          <td className="p-3 text-right space-x-2">
+                          <td className="p-3 text-right space-x-2 whitespace-nowrap">
                             <Button size="sm" variant="secondary" onClick={() => { setEditing(r); setShowForm(true); }}>Editar</Button>
                             <Button size="sm" variant="ghost" onClick={() => duplicateRecipe(business.id, r)}>Duplicar</Button>
                             <Button size="sm" variant="ghost" className="text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => setToDelete(r)}>Eliminar</Button>

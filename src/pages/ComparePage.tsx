@@ -54,7 +54,7 @@ export const ComparePage = () => {
       </Card>
 
       <div className="overflow-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[920px] text-sm">
           <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300">
             <tr>
               <th className="p-3 text-left">Fecha</th>
