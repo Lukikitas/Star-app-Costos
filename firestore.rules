@@ -64,6 +64,11 @@ service cloud.firestore {
         allow create, update, delete: if canEditBusinessData(businessId)
           || (settingId == "categories" && isBusinessMember(businessId));
       }
+
+      match /priceHistory/{entryId} {
+        allow read: if isBusinessMember(businessId);
+        allow create: if canEditBusinessData(businessId);
+      }
     }
   }
 }

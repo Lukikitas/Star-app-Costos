@@ -11,6 +11,7 @@ import { addCategory, removeCategory, renameCategory } from "../services/categor
 import { createRecipe } from "../services/recipeService";
 import { importBusinessData, resetBusinessData } from "../services/importExportService";
 import { createSupply, getSuppliesOnce } from "../services/supplyService";
+import { updateBusiness } from "../services/businessService";
 import { CreateRecipeInput, Supply } from "../types";
 
 const demoSupplies = [
@@ -30,10 +31,12 @@ export const SettingsPage = () => {
   const [newSupplyCategory, setNewSupplyCategory] = useState("");
   const [newRecipeCategory, setNewRecipeCategory] = useState("");
   const [catError, setCatError] = useState<string>();
+  const [businessName, setBusinessName] = useState("");
 
   useEffect(() => {
     if (!business) return;
     getSuppliesOnce(business.id).then((items) => setCanLoadDemo(items.length === 0));
+    setBusinessName(business.name);
   }, [business]);
 
   if (!business) return null;
@@ -88,10 +91,29 @@ export const SettingsPage = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title="Negocio" />
-        <CardBody className="space-y-2">
+        <CardHeader title="Negocio" description="Podés actualizar el nombre visible de tu negocio." />
+        <CardBody className="space-y-3">
           <p className="font-medium text-slate-900 dark:text-slate-100">{business.name}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">Usuario: {user?.email}</p>
+          <div className="flex flex-wrap gap-2 items-end">
+            <Input
+              label="Nombre del negocio"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                const next = businessName.trim();
+                if (!next) return;
+                await updateBusiness(business.id, { name: next });
+                setMessage("Nombre del negocio actualizado.");
+              }}
+            >
+              Guardar nombre
+            </Button>
+          </div>
         </CardBody>
       </Card>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">

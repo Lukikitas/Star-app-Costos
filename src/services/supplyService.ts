@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -14,6 +15,7 @@ import { db } from "../firebase";
 import { CreateSupplyInput, Supply } from "../types";
 import { calculateUnitCost, getBaseUnit, normalizeQuantity } from "../utils/costCalculations";
 import { deleteImageByPath, uploadCoverImage } from "./imageService";
+import { logSupplyPriceChange } from "./priceHistoryService";
 
 const validate = (input: CreateSupplyInput) => {
   if (!input.name.trim()) throw new Error("El nombre del insumo es obligatorio.");
@@ -45,10 +47,23 @@ export const createSupply = async (businessId: string, input: CreateSupplyInput)
 
 export const updateSupply = async (businessId: string, supplyId: string, input: CreateSupplyInput) => {
   validate(input);
-  await updateDoc(doc(db, "businesses", businessId, "supplies", supplyId), {
-    ...buildData(input),
-    updatedAt: serverTimestamp(),
-  });
+  const ref = doc(db, "businesses", businessId, "supplies", supplyId);
+  const prevSnap = await getDoc(ref);
+  const prev = prevSnap.exists() ? (prevSnap.data() as Omit<Supply, "id">) : undefined;
+
+  const next = buildData(input);
+  await updateDoc(ref, { ...next, updatedAt: serverTimestamp() });
+
+  if (prev && (prev.unitCost !== next.unitCost || prev.packageCost !== next.packageCost)) {
+    await logSupplyPriceChange(businessId, {
+      supplyId,
+      supplyName: prev.name ?? next.name,
+      previousUnitCost: prev.unitCost ?? 0,
+      nextUnitCost: next.unitCost,
+      previousPackageCost: prev.packageCost ?? 0,
+      nextPackageCost: next.packageCost,
+    });
+  }
 };
 
 export const deleteSupply = async (businessId: string, supplyId: string) => {

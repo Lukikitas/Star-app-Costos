@@ -98,3 +98,27 @@ export interface BusinessExportData {
   supplies: Omit<Supply, "id">[];
   recipes: Omit<Recipe, "id">[];
 }
+
+export interface PriceHistoryEntry {
+  id: string;
+  kind: "supply" | "recipe";
+  supplyId?: string;
+  supplyName?: string;
+  recipeId?: string;
+  recipeName?: string;
+  triggerSupplyId?: string;
+  triggerSupplyName?: string;
+  previousUnitCost?: number;
+  nextUnitCost?: number;
+  previousPackageCost?: number;
+  nextPackageCost?: number;
+  previousSuggestedPrice?: number;
+  nextSuggestedPrice?: number;
+  previousProductionCost?: number;
+  nextProductionCost?: number;
+  previousEstimatedProfit?: number;
+  nextEstimatedProfit?: number;
+  previousRealMargin?: number;
+  nextRealMargin?: number;
+  createdAt?: Timestamp;
+}

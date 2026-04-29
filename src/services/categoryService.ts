@@ -25,6 +25,16 @@ const uniqueSorted = (items: string[]) => {
   return out.sort((a, b) => a.localeCompare(b, "es"));
 };
 
+const mapCategoryError = (error: unknown) => {
+  const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+  if (code === "permission-denied") {
+    return new Error(
+      "No tenés permisos para modificar categorías. Revisá que Firestore Rules esté publicado y que tu usuario figure como miembro del negocio.",
+    );
+  }
+  return error instanceof Error ? error : new Error("No se pudo operar con categorías.");
+};
+
 export const getDefaultCategories = (): BusinessCategories => ({
   supplies: [...SUPPLY_CATEGORIES],
   recipes: [...SUPPLY_CATEGORIES],
@@ -73,34 +83,46 @@ export const listenCategories = (businessId: string, cb: (categories: BusinessCa
 export const addCategory = async (businessId: string, kind: keyof BusinessCategories, value: string) => {
   const next = normalize(value);
   if (!next) throw new Error("La categoría no puede estar vacía.");
-  await ensureCategoriesDoc(businessId);
-  const current = await getCategoriesOnce(businessId);
-  await updateDoc(categoriesDocRef(businessId), {
-    [kind]: uniqueSorted([...(current[kind] ?? []), next]),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await ensureCategoriesDoc(businessId);
+    const current = await getCategoriesOnce(businessId);
+    await updateDoc(categoriesDocRef(businessId), {
+      [kind]: uniqueSorted([...(current[kind] ?? []), next]),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw mapCategoryError(error);
+  }
 };
 
 export const removeCategory = async (businessId: string, kind: keyof BusinessCategories, value: string) => {
   const next = normalize(value);
-  await ensureCategoriesDoc(businessId);
-  const current = await getCategoriesOnce(businessId);
-  await updateDoc(categoriesDocRef(businessId), {
-    [kind]: uniqueSorted((current[kind] ?? []).filter((x) => x.toLowerCase() !== next.toLowerCase())),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await ensureCategoriesDoc(businessId);
+    const current = await getCategoriesOnce(businessId);
+    await updateDoc(categoriesDocRef(businessId), {
+      [kind]: uniqueSorted((current[kind] ?? []).filter((x) => x.toLowerCase() !== next.toLowerCase())),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw mapCategoryError(error);
+  }
 };
 
 export const renameCategory = async (businessId: string, kind: keyof BusinessCategories, from: string, to: string) => {
   const nextFrom = normalize(from);
   const nextTo = normalize(to);
   if (!nextTo) throw new Error("La categoría no puede estar vacía.");
-  await ensureCategoriesDoc(businessId);
-  const current = await getCategoriesOnce(businessId);
-  const mapped = (current[kind] ?? []).map((x) => (x.toLowerCase() === nextFrom.toLowerCase() ? nextTo : x));
-  await updateDoc(categoriesDocRef(businessId), {
-    [kind]: uniqueSorted(mapped),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await ensureCategoriesDoc(businessId);
+    const current = await getCategoriesOnce(businessId);
+    const mapped = (current[kind] ?? []).map((x) => (x.toLowerCase() === nextFrom.toLowerCase() ? nextTo : x));
+    await updateDoc(categoriesDocRef(businessId), {
+      [kind]: uniqueSorted(mapped),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    throw mapCategoryError(error);
+  }
 };
 

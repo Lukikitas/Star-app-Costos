@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -25,6 +26,7 @@ import {
   normalizeQuantity,
   roundPrice,
 } from "../utils/costCalculations";
+import { logRecipePriceChange } from "./priceHistoryService";
 
 const buildIngredients = (input: CreateRecipeInput, supplies: Supply[]): RecipeIngredient[] => {
   if (!input.ingredients.length) throw new Error("La receta debe tener al menos un ingrediente.");
@@ -112,10 +114,27 @@ export const createRecipe = async (businessId: string, input: CreateRecipeInput,
 };
 
 export const updateRecipe = async (businessId: string, recipeId: string, input: CreateRecipeInput, supplies: Supply[]) => {
-  await updateDoc(doc(db, "businesses", businessId, "recipes", recipeId), {
-    ...buildRecipeData(input, supplies),
-    updatedAt: serverTimestamp(),
-  });
+  const ref = doc(db, "businesses", businessId, "recipes", recipeId);
+  const prevSnap = await getDoc(ref);
+  const prev = prevSnap.exists() ? ({ id: recipeId, ...(prevSnap.data() as Omit<Recipe, "id">) } as Recipe) : undefined;
+  const next = buildRecipeData(input, supplies);
+
+  await updateDoc(ref, { ...next, updatedAt: serverTimestamp() });
+
+  if (prev && (prev.suggestedPrice !== next.suggestedPrice || prev.productionCost !== next.productionCost)) {
+    await logRecipePriceChange(businessId, {
+      recipeId,
+      recipeName: prev.name ?? next.name,
+      previousSuggestedPrice: prev.suggestedPrice ?? 0,
+      nextSuggestedPrice: next.suggestedPrice,
+      previousProductionCost: prev.productionCost ?? 0,
+      nextProductionCost: next.productionCost,
+      previousEstimatedProfit: prev.estimatedProfit ?? 0,
+      nextEstimatedProfit: next.estimatedProfit,
+      previousRealMargin: prev.realMargin ?? 0,
+      nextRealMargin: next.realMargin,
+    });
+  }
 };
 
 export const deleteRecipe = async (businessId: string, recipeId: string) => {
@@ -181,10 +200,26 @@ export const applyRecipePricingRecalculation = async (
   recipeId: string,
   recipe: Recipe,
   supplies: Supply[],
+  triggerSupply?: { id: string; name: string },
 ) => {
   const recalculated = recalculateRecipePricing(recipe, supplies);
   await updateDoc(doc(db, "businesses", businessId, "recipes", recipeId), {
     ...recalculated,
     updatedAt: serverTimestamp(),
+  });
+
+  await logRecipePriceChange(businessId, {
+    recipeId,
+    recipeName: recipe.name,
+    triggerSupplyId: triggerSupply?.id,
+    triggerSupplyName: triggerSupply?.name,
+    previousSuggestedPrice: recipe.suggestedPrice,
+    nextSuggestedPrice: recalculated.suggestedPrice,
+    previousProductionCost: recipe.productionCost,
+    nextProductionCost: recalculated.productionCost,
+    previousEstimatedProfit: recipe.estimatedProfit,
+    nextEstimatedProfit: recalculated.estimatedProfit,
+    previousRealMargin: recipe.realMargin,
+    nextRealMargin: recalculated.realMargin,
   });
 };

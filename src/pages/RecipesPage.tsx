@@ -138,9 +138,9 @@ export const RecipesPage = () => {
                           <td className="p-3">
                             <div className="flex items-center gap-3">
                               {r.imageUrl ? (
-                                <img src={r.imageUrl} alt={r.name} className="h-9 w-9 rounded-lg object-cover border border-slate-200 dark:border-slate-800" />
+                                <img src={r.imageUrl} alt={r.name} className="h-14 w-14 rounded-lg object-cover border border-slate-200 dark:border-slate-800" />
                               ) : (
-                                <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800" />
+                                <div className="h-14 w-14 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800" />
                               )}
                               <div>
                                 <h3 className="font-semibold text-slate-900 dark:text-slate-100">{r.name}</h3>

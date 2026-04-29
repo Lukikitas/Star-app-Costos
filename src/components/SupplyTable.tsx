@@ -24,9 +24,9 @@ export const SupplyTable = ({ items, onEdit, onDelete }: Props) => (
           <tr key={s.id} className="border-t border-slate-200 dark:border-slate-800">
             <td className="p-3">
               {s.imageUrl ? (
-                <img src={s.imageUrl} alt={s.name} className="h-9 w-9 rounded-lg object-cover border border-slate-200 dark:border-slate-800" />
+                <img src={s.imageUrl} alt={s.name} className="h-14 w-14 rounded-lg object-cover border border-slate-200 dark:border-slate-800" />
               ) : (
-                <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800" />
+                <div className="h-14 w-14 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800" />
               )}
             </td>
             <td className="p-3">{s.name}</td>

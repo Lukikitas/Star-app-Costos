@@ -4,7 +4,7 @@ const links = [
   ["/dashboard", "Dashboard"],
   ["/supplies", "Insumos"],
   ["/recipes", "Recetas"],
-  ["/compare", "Comparador"],
+  ["/compare", "Historial"],
   ["/settings", "Configuración"],
 ] as const;
 

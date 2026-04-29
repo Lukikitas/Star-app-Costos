@@ -115,9 +115,9 @@ export const RecipeForm = ({ supplies, initial, onSubmit, onCancel }: Props) => 
           {removeImage && <p className="text-xs text-slate-500 dark:text-slate-400">Se eliminará la foto al guardar.</p>}
         </div>
         {previewUrl ? (
-          <img src={previewUrl} alt="Preview" className="h-24 w-24 rounded-xl object-cover border border-slate-200 dark:border-slate-800" />
+          <img src={previewUrl} alt="Preview" className="h-36 w-36 rounded-xl object-cover border border-slate-200 dark:border-slate-800" />
         ) : initial?.imageUrl && !removeImage ? (
-          <img src={initial.imageUrl} alt={initial.name} className="h-24 w-24 rounded-xl object-cover border border-slate-200 dark:border-slate-800" />
+          <img src={initial.imageUrl} alt={initial.name} className="h-36 w-36 rounded-xl object-cover border border-slate-200 dark:border-slate-800" />
         ) : null}
       </div>
       <div className="flex justify-end gap-2">

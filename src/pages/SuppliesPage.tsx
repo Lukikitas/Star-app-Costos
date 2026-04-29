@@ -29,6 +29,7 @@ export const SuppliesPage = () => {
   const [impactSupplies, setImpactSupplies] = useState<Supply[]>([]);
   const [impactRecipeById, setImpactRecipeById] = useState<Record<string, Recipe>>({});
   const [impactGlobalError, setImpactGlobalError] = useState<string | undefined>(undefined);
+  const [impactTriggerSupply, setImpactTriggerSupply] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!business) return;
@@ -44,10 +45,11 @@ export const SuppliesPage = () => {
 
   if (!business) return <EmptyState title="Sin negocio activo" description="No se pudo cargar los insumos." />;
 
-  const loadImpactedRecipesForSupply = async (supplyId: string) => {
+  const loadImpactedRecipesForSupply = async (supplyId: string, supplyName: string) => {
     setImpactLoading(true);
     setImpactOpen(true);
     setImpactGlobalError(undefined);
+    setImpactTriggerSupply({ id: supplyId, name: supplyName });
 
     try {
       const [freshSupplies, freshRecipes] = await Promise.all([
@@ -167,8 +169,8 @@ export const SuppliesPage = () => {
 
               // Si subió el costo unitario del insumo, mostramos qué recetas cambian.
               // (usamos el unitCost recalculado con la misma fórmula del backend)
-              if (supplyToEdit && newUnitCost != null && newUnitCost > supplyToEdit.unitCost) {
-                await loadImpactedRecipesForSupply(supplyToEdit.id);
+              if (supplyToEdit && newUnitCost != null && newUnitCost !== supplyToEdit.unitCost) {
+                await loadImpactedRecipesForSupply(supplyToEdit.id, supplyToEdit.name);
               }
             }}
           />
@@ -222,7 +224,13 @@ export const SuppliesPage = () => {
               ids.map((rid) => {
                 const recipe = impactRecipeById[rid];
                 if (!recipe) return Promise.resolve();
-                return applyRecipePricingRecalculation(business.id, rid, recipe, impactSupplies);
+                return applyRecipePricingRecalculation(
+                  business.id,
+                  rid,
+                  recipe,
+                  impactSupplies,
+                  impactTriggerSupply ?? undefined,
+                );
               }),
             );
             setImpactOpen(false);
